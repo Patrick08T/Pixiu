@@ -4,14 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Character/CCharacter.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "CPlayerCharacter.generated.h"
 
-class USpringArmComponent;
-class UCameraComponent;
+class UInputAction;
+class UInputMappingContext;
 
-/**
- * Player character with a follow camera (spring arm + camera)
- */
 UCLASS()
 class ACPlayerCharacter : public ACCharacter
 {
@@ -19,21 +18,22 @@ class ACPlayerCharacter : public ACCharacter
 
 public:
 	ACPlayerCharacter();
-
-protected:
+	virtual void PawnClientRestart() override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// Input handlers for camera
-	void Turn(float Value);
-	void LookUp(float Value);
-
-protected:
+private:
 	// Spring arm that positions the camera behind the character
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "View", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	USpringArmComponent* SpringArm;
 
 	// Follow camera
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "View", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	UCameraComponent* Camera;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* JumpInputAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputMappingContext* GamePlayerCharacterMappingContext;
 };
