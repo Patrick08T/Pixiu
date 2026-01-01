@@ -24,10 +24,22 @@ public:
 	// Native thread safe update override point. Executed on a worker thread just prior to graph update 
 	// for linked anim instances, only called when the hosting node(s) are relevant
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE float GetSpeed() const { return Speed; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE bool IsMoving() const { return Speed != 0; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE bool IsNotMoving() const { return Speed == 0; }
+
 private:
 	UPROPERTY()
 	ACharacter* OwnerCharacter;
 
 	UPROPERTY()
 	UCharacterMovementComponent* OwnerMovementComp;
+
+	float Speed;
 };
