@@ -34,6 +34,23 @@ public:
 	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
 	FORCEINLINE bool IsNotMoving() const { return Speed == 0; }
 
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE float GetYawSpeed() const { return YawSpeed; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE float GetSmoothYawSpeed() const { return SmoothYawSpeed; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE bool GetIsJumping() const { return bIsJumping; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE bool GetIsOnGround() const { return !bIsJumping; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE float GetLookYawOffset() const { return LookRotOffset.Yaw; }
+
+	UFUNCTION(BlueprintCallable, meta=(BlueprinThreadSafe))
+	FORCEINLINE float GetLookPitchOffset() const { return LookRotOffset.Pitch; }
 private:
 	UPROPERTY()
 	ACharacter* OwnerCharacter;
@@ -42,4 +59,11 @@ private:
 	UCharacterMovementComponent* OwnerMovementComp;
 
 	float Speed;
+	float YawSpeed;
+	float SmoothYawSpeed;
+	bool bIsJumping;
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	float YawSpeedSmoothLerpSpeed = 1.f;
+	FRotator BodyPrevRotation;
+	FRotator LookRotOffset;
 };
