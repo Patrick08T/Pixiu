@@ -5,21 +5,38 @@
 #include "Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/Engine.h"
+#include "GAS/CAbilitySystemComponent.h"
+#include "GAS/CAttributeSet.h"
 
 // Sets default values
 ACCharacter::ACCharacter()
 {
  	// Set this character to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	CAbilitySystemComponent = CreateDefaultSubobject<UCAbilitySystemComponent>(TEXT("CAbilitySystemComponent"));
+	CAttributeSet = CreateDefaultSubobject<UCAttributeSet>(TEXT("CAttributeSet"));
 
 	// Ensure capsule collision is enabled and generates overlap/hit events
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-	{
-		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		Capsule->SetCollisionProfileName(TEXT("Pawn"));
-		Capsule->SetGenerateOverlapEvents(true);
-		Capsule->SetNotifyRigidBodyCollision(true); // enable OnComponentHit
-	}
+	//if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	//{
+	//	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	//	Capsule->SetCollisionProfileName(TEXT("Pawn"));
+	//	Capsule->SetGenerateOverlapEvents(true);
+	//	Capsule->SetNotifyRigidBodyCollision(true); // enable OnComponentHit
+	//}
+}
+
+void ACCharacter::ServerSideInit()
+{
+	CAbilitySystemComponent->InitAbilityActorInfo(this, this);
+	CAbilitySystemComponent->ApplyInitialEffects();
+}
+
+void ACCharacter::ClientSideInit()
+{
+	CAbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
 // Called when the game starts or when spawned
@@ -67,5 +84,10 @@ void ACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+UAbilitySystemComponent* ACCharacter::GetAbilitySystemComponent() const
+{
+	return CAbilitySystemComponent;
 }
 
