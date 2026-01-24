@@ -20,20 +20,13 @@ public:
 	ACCharacter();
 	void ServerSideInit();
 	void ClientSideInit();
+	bool IsLocallyControlledByPlayer() const;
+	// only called on the server
+	virtual void PossessedBy(AController* NewController) override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	// Collision callbacks
-	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-	                    const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	           FVector NormalImpulse, const FHitResult& Hit);
 
 public:	
 	// Called every frame
@@ -52,5 +45,20 @@ private:
 	class UCAbilitySystemComponent* CAbilitySystemComponent;
 	UPROPERTY()
 	class UCAttributeSet* CAttributeSet;
+	/**********************************************************************************/
+	/*                                          UI                                    */
+	/**********************************************************************************/
+	UPROPERTY(VisibleDefaultsOnly, Category="Gameplay Ability")
+	class UWidgetComponent* OverHeadWidgetComponent;
+	void ConfigureOverHeadStatusWidget();
 
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	float HeadStatGaugeVisibilityCheckUpdateGap = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	float HeadStatGaugeVisibilityRangeSquared = 1000000.f;
+
+	FTimerHandle HeadStatGaugeVisibilityUpdateTimerHandle;
+
+	void UpdateHeadGaugeVisibility();
 };

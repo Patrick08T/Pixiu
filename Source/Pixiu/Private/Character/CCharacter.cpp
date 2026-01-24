@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Character/CCharacter.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/PrimitiveComponent.h"
-#include "GameFramework/Actor.h"
-#include "Engine/Engine.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GAS/CAbilitySystemComponent.h"
 #include "GAS/CAttributeSet.h"
+#include "Widgets/OverHeadStatusGauge.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ACCharacter::ACCharacter()
@@ -15,17 +15,10 @@ ACCharacter::ACCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	CAbilitySystemComponent = CreateDefaultSubobject<UCAbilitySystemComponent>(TEXT("CAbilitySystemComponent"));
-	CAttributeSet = CreateDefaultSubobject<UCAttributeSet>(TEXT("CAttributeSet"));
-
-	// Ensure capsule collision is enabled and generates overlap/hit events
-	//if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-	//{
-	//	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	//	Capsule->SetCollisionProfileName(TEXT("Pawn"));
-	//	Capsule->SetGenerateOverlapEvents(true);
-	//	Capsule->SetNotifyRigidBodyCollision(true); // enable OnComponentHit
-	//}
+	CAbilitySystemComponent = CreateDefaultSubobject<UCAbilitySystemComponent>(TEXT("CAbility System Component"));
+	CAttributeSet = CreateDefaultSubobject<UCAttributeSet>(TEXT("CAttribute Set"));
+	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("Over Head Widget Component");
+	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
 }
 
 void ACCharacter::ServerSideInit()
@@ -39,37 +32,26 @@ void ACCharacter::ClientSideInit()
 	CAbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
+bool ACCharacter::IsLocallyControlledByPlayer() const
+{
+	return GetController() && GetController()->IsLocalPlayerController();
+}
+
+void ACCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (NewController && !NewController->IsPlayerController())
+	{
+		ServerSideInit();
+	}
+}
+
 // Called when the game starts or when spawned
 void ACCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Bind overlap/hit delegates
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-	{
-		Capsule->OnComponentBeginOverlap.AddDynamic(this, &ACCharacter::OnBeginOverlap);
-		Capsule->OnComponentHit.AddDynamic(this, &ACCharacter::OnHit);
-	}
-}
-
-// Collision callback implementations
-void ACCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-                                const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != this)
-	{
-		UE_LOG(LogTemp, Log, TEXT("%s BeginOverlap with %s"), *GetName(), *OtherActor->GetName());
-	}
-}
-
-void ACCharacter::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-                       FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (OtherActor && OtherActor != this)
-	{
-		UE_LOG(LogTemp, Log, TEXT("%s Hit with %s"), *GetName(), *OtherActor->GetName());
-	}
+	ConfigureOverHeadStatusWidget();
 }
 
 // Called every frame
@@ -89,5 +71,37 @@ void ACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 UAbilitySystemComponent* ACCharacter::GetAbilitySystemComponent() const
 {
 	return CAbilitySystemComponent;
+}
+
+void ACCharacter::ConfigureOverHeadStatusWidget()
+{
+	if (!OverHeadWidgetComponent)
+	{
+		return;
+	}
+	if (IsLocallyControlledByPlayer())
+	{
+		OverHeadWidgetComponent->SetHiddenInGame(true);
+		return;
+	}
+
+	UOverHeadStatusGauge* OverHeadStatusGuage = Cast<UOverHeadStatusGauge>(OverHeadWidgetComponent->GetUserWidgetObject()); 
+	if (OverHeadStatusGuage)
+	{
+		OverHeadStatusGuage->ConfigureWithASC(GetAbilitySystemComponent());
+		OverHeadWidgetComponent->SetHiddenInGame(false);
+		GetWorldTimerManager().ClearTimer(HeadStatGaugeVisibilityUpdateTimerHandle);
+		GetWorldTimerManager().SetTimer(HeadStatGaugeVisibilityUpdateTimerHandle, this, &ACCharacter::UpdateHeadGaugeVisibility, HeadStatGaugeVisibilityCheckUpdateGap,true);
+	}
+}
+
+void ACCharacter::UpdateHeadGaugeVisibility()
+{
+	APawn* LocalPlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (LocalPlayerPawn)
+	{
+		float DistSquared = FVector::DistSquared(GetActorLocation(), LocalPlayerPawn->GetActorLocation());
+		OverHeadWidgetComponent->SetHiddenInGame(DistSquared > HeadStatGaugeVisibilityRangeSquared);
+	}
 }
 
