@@ -23,9 +23,11 @@ ACPlayerCharacter::ACPlayerCharacter()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationRoll = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 720.f, 0.f); // ...at this rotation rate
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Character rotation is controlled by camera/controller input
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 }
 
 void ACPlayerCharacter::PawnClientRestart()
@@ -38,7 +40,7 @@ void ACPlayerCharacter::PawnClientRestart()
 		if(InputSubsystem)
 		{
 			InputSubsystem->RemoveMappingContext(GamePlayerCharacterMappingContext);
-			InputSubsystem->AddMappingContext(GamePlayerCharacterMappingContext, 0); // Èç¹ûÓÐÄ¬ÈÏÓ³ÉäÉÏÏÂÎÄ£¬¿ÉÒÔÔÚ´ËÌí¼Ó
+			InputSubsystem->AddMappingContext(GamePlayerCharacterMappingContext, 0); // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½
 		}
 	}
 }
