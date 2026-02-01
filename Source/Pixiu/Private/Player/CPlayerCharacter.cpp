@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -54,6 +55,10 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Jump);
 		EnhancedInputComponent->BindAction(LookInputAction, ETriggerEvent::Triggered, this, &ACPlayerCharacter::HandleLookInput);
 		EnhancedInputComponent->BindAction(MoveInputAction, ETriggerEvent::Triggered, this, &ACPlayerCharacter::HandleMoveInput);
+		for(const TPair<ECAbilityInputID,UInputAction*>& Pair : GameplayAbilityInputActions)
+		{
+			EnhancedInputComponent->BindAction(Pair.Value, ETriggerEvent::Triggered, this, &ACPlayerCharacter::HandleAbilityInput, Pair.Key);
+		}
 	}
 }
 
@@ -70,6 +75,25 @@ void ACPlayerCharacter::HandleMoveInput(const FInputActionValue& Value)
 	MoveInputValue.Normalize();
 	
 	AddMovementInput(GetMoveFwdDir() * MoveInputValue.Y + GetLookRightDir() * MoveInputValue.X);
+}
+
+void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& Value, ECAbilityInputID InputID)
+{
+	bool bPressed = Value.Get<bool>();
+	if (bPressed)
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			ASC->AbilityLocalInputPressed((int32)InputID);
+		}
+	}
+	else
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			ASC->AbilityLocalInputReleased((int32)InputID);
+		}
+	}
 }
 
 FVector ACPlayerCharacter::GetLookRightDir() const

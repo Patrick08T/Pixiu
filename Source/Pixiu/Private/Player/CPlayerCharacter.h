@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "InputActionValue.h"
+#include "GAS/CGameplayAbilityTypes.h"
 #include "CPlayerCharacter.generated.h"
 
 class UInputAction;
@@ -32,6 +33,13 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	UCameraComponent* Camera;
 
+	FVector GetLookRightDir() const;
+	FVector GetLookFwdDir() const;
+	FVector GetMoveFwdDir() const;
+
+	/********************************************************/
+	/*                          input                       */
+	/********************************************************/
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* JumpInputAction;
 
@@ -42,12 +50,12 @@ private:
 	UInputAction* MoveInputAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TMap<ECAbilityInputID,UInputAction*> GameplayAbilityInputActions;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* GamePlayerCharacterMappingContext;
 
 	void HandleLookInput(const FInputActionValue& Value);
 	void HandleMoveInput(const FInputActionValue& Value);
-
-	FVector GetLookRightDir() const;
-	FVector GetLookFwdDir() const;
-	FVector GetMoveFwdDir() const;
+	void HandleAbilityInput(const FInputActionValue& Value, ECAbilityInputID InputID);
 };
