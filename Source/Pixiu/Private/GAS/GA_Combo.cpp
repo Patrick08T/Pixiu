@@ -4,8 +4,10 @@
 #include "GAS/GA_Combo.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
 #include "GameplayTagsManager.h"
 #include "GAS/CAbilitySystemStatics.h"
+#include "GameFramework/Pawn.h"
 
 UGA_Combo::UGA_Combo()
 {
@@ -30,13 +32,14 @@ void UGA_Combo::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 		PlayComboMontageTask->OnInterrupted.AddDynamic(this, &UGA_Combo::K2_EndAbility);
 		PlayComboMontageTask->ReadyForActivation();
 
-		UAbilityTask_WaitGameplayEvent* WaitForNextComboEvent = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GetComboAbilityTag(), nullptr, false, false);
+		UAbilityTask_WaitGameplayEvent* WaitForNextComboEvent = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GetComboChangedEventTag(), nullptr, false, false);
 		WaitForNextComboEvent->EventReceived.AddDynamic(this, &UGA_Combo::ComboChangedEventReceived);
 		WaitForNextComboEvent->ReadyForActivation();
 	}
+	SetupWaitComboInputPress();
 }
 
-FGameplayTag UGA_Combo::GetComboAbilityTag()
+FGameplayTag UGA_Combo::GetComboChangedEventTag()
 {
 	return FGameplayTag::RequestGameplayTag("ability.combo.change");
 }
@@ -44,6 +47,35 @@ FGameplayTag UGA_Combo::GetComboAbilityTag()
 FGameplayTag UGA_Combo::GetComboAbilityEndTag()
 {
 	return FGameplayTag::RequestGameplayTag("ability.combo.change.end");
+}
+
+void UGA_Combo::SetupWaitComboInputPress()
+{
+    UAbilityTask_WaitInputPress* WaitInputPress = UAbilityTask_WaitInputPress::WaitInputPress(this);
+    WaitInputPress->OnPress.AddDynamic(this, &UGA_Combo::HandleInputPress);
+    WaitInputPress->ReadyForActivation();
+}
+
+void UGA_Combo::HandleInputPress(float TimeWaited)
+{
+	SetupWaitComboInputPress();
+	TryCommitCombo();
+}
+
+void UGA_Combo::TryCommitCombo()
+{
+	if (NextComboName == NAME_None)
+	{
+		return;
+	}
+
+	UAnimInstance* OwnerAnimInst = GetOwnerAnimInstance();
+	if (!OwnerAnimInst)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Next Combo is %s %s"), *OwnerAnimInst->Montage_GetCurrentSection(ComboMontage).ToString(), *NextComboName.ToString());
+	OwnerAnimInst->Montage_SetNextSection(OwnerAnimInst->Montage_GetCurrentSection(ComboMontage), NextComboName, ComboMontage);
 }
 
 void UGA_Combo::ComboChangedEventReceived(FGameplayEventData Payload)
