@@ -18,6 +18,7 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	static FGameplayTag GetComboChangedEventTag();
 	static FGameplayTag GetComboAbilityEndTag();
+	static FGameplayTag GetComboTargetEventTag();
 
 private:
 	void SetupWaitComboInputPress();
@@ -27,11 +28,25 @@ private:
 
 	void TryCommitCombo();
 
+	UPROPERTY(EditDefaultsOnly, CateGory = "Targetting")
+	float TaretSweepSphereRadius = 30.f;
+
+	UPROPERTY(EditDefaultsOnly, CateGory = "Gameplay Effect")
+	TSubclassOf<UGameplayEffect> DefaultDamageEffect;
+
+	UPROPERTY(EditDefaultsOnly, CateGory = "Gameplay Effect")
+	TMap<FName, TSubclassOf<UGameplayEffect>> DamageEffectMap;
+
+	TSubclassOf<UGameplayEffect> GetDamageEffectForCurrentCombo() const;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* ComboMontage;
 
 	UFUNCTION()
 	void ComboChangedEventReceived(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void DoDamage(FGameplayEventData Payload);
 
 	FName NextComboName;
 };
