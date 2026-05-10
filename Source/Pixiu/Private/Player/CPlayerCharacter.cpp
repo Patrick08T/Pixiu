@@ -96,6 +96,24 @@ void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& Value, ECAbi
 	}
 }
 
+void ACPlayerCharacter::OnDead()
+{
+	auto* PlayerController = GetController<APlayerController>();
+	if (PlayerController)
+	{
+		DisableInput(PlayerController);
+	}
+}
+
+void ACPlayerCharacter::OnRespawn()
+{
+	auto* PlayerController = GetController<APlayerController>();
+	if (PlayerController)
+	{
+		EnableInput(PlayerController);
+	}
+}
+
 FVector ACPlayerCharacter::GetLookRightDir() const
 {
 	return Camera->GetRightVector();
