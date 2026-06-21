@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GenericTeamAgentInterface.h"
 #include "CPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ACPlayerController : public APlayerController
+class ACPlayerController : public APlayerController, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 public:
@@ -18,6 +19,12 @@ public:
 	void OnPossess(APawn* InPawn) override;
     // only called on the client, also on the listening server
     void AcknowledgePossession(APawn* NewPawn) override;
+
+	/** Assigns Team Agent to given TeamID */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 	void SpawnGameplayWidget();
 
@@ -29,4 +36,7 @@ private:
 
 	UPROPERTY()
 	class UGameplayWidget* GameplayWidget;
+	
+	UPROPERTY(Replicated)
+	FGenericTeamId TeamID;
 };
